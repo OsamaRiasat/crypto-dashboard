@@ -1,0 +1,68 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+*.log
+
+# Virtual Environment
+venv/
+env/
+ENV/
+.venv/
+
+# FastAPI auto-generated files
+instance/
+*.db
+*.sqlite3
+
+# Environment variables
+.env
+.env.*
+
+# IDEs
+.vscode/
+.idea/
+
+# Pytest
+htmlcov/
+.tox/
+.pytest_cache/
+.coverage
+.coverage.*
+
+# mypy
+.mypy_cache/
+
+# Pydantic
+__pydantic__/  # only if using compiled pydantic models
+
+# Cache
+*.cache
+*.egg-info/
+dist/
+build/
+
+# Docker
+*.pid
+docker-compose.override.yml
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Static or compiled files
+staticfiles/
+*.js.map
+*.css.map
+
+# Logs
+*.log
+
+# Uvicorn logs/pids (if run manually)
+*.pid
+*.log
