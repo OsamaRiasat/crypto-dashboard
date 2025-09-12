@@ -24,6 +24,10 @@ class Settings(BaseSettings):
     BINANCE_API_KEY: str = os.getenv("BINANCE_API_KEY", "")
     BINANCE_API_SECRET: str = os.getenv("BINANCE_API_SECRET", "")
     
+    # Coinbase API credentials
+    COINBASE_API_KEY: str = os.getenv("COINBASE_API_KEY", "")
+    COINBASE_API_SECRET: str = os.getenv("COINBASE_API_SECRET", "")
+    
     # API endpoints
     COINGECKO_API_URL: str = "https://api.coingecko.com/api/v3"
     KUCOIN_API_URL: str = "https://api.kucoin.com"

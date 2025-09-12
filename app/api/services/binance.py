@@ -3,6 +3,7 @@ from typing import Dict, Any, Optional, List
 import requests
 from binance.client import Client
 from binance.exceptions import BinanceAPIException
+from decimal import Decimal
 
 from app.core.config import settings
 
@@ -16,15 +17,16 @@ class BinanceService:
         """Get account balance for all assets"""
         try:
             account = self.client.get_account()
-            non_zero_balances = [
-                {
-                    'asset': balance['asset'],
-                    'free': float(balance['free']),
-                    'locked': float(balance['locked'])
-                }
-                for balance in account['balances']
-                if float(balance['free']) > 0 or float(balance['locked']) > 0
-            ]
+            non_zero_balances = []
+            for balance in account['balances']:
+                free_decimal = Decimal(str(balance['free']))
+                locked_decimal = Decimal(str(balance['locked']))
+                if free_decimal > 0 or locked_decimal > 0:
+                    non_zero_balances.append({
+                        'asset': balance['asset'],
+                        'free': float(free_decimal),  # Convert to float for JSON serialization
+                        'locked': float(locked_decimal)  # Convert to float for JSON serialization
+                    })
             return non_zero_balances
         except BinanceAPIException as e:
             raise Exception(f'Error fetching account balance: {e}')
