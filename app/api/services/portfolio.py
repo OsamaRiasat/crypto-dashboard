@@ -1,10 +1,11 @@
 import asyncio
+import time
 from datetime import datetime
 from typing import Dict, Any, List, Optional
 import requests
 from decimal import Decimal, getcontext
 
-# Set decimal precision to handle very small values
+# Set high precision for decimal calculations
 getcontext().prec = 28
 
 from app.api.services.kucoin import kucoin_service
@@ -18,17 +19,29 @@ class PortfolioService:
     def __init__(self):
         self.price_cache = {}
         self.cache_duration = 300  # 5 minutes cache for prices
+        self.rate_limit_cache = {}  # Track rate limit failures
+        self.popular_coins_cache_duration = 15  # 15 minutes for popular coins (BTC, ETH, etc.)
         
     async def get_crypto_price(self, symbol: str) -> float:
         """Get current price of a cryptocurrency in USD"""
         symbol_lower = symbol.lower()
         
-        # Check cache first
+        # Check cache first with different durations for popular coins
         current_time = datetime.now().timestamp()
+        popular_coins = ['btc', 'eth', 'usdt', 'usdc', 'bnb']
+        cache_duration = self.popular_coins_cache_duration if symbol_lower in popular_coins else self.cache_duration
+        
         if symbol_lower in self.price_cache:
             cached_data = self.price_cache[symbol_lower]
-            if current_time - cached_data['timestamp'] < self.cache_duration:
+            if current_time - cached_data['timestamp'] < cache_duration:
                 return cached_data['price']
+        
+        # Check if we recently hit rate limit for this symbol
+        if symbol_lower in self.rate_limit_cache:
+            last_rate_limit = self.rate_limit_cache[symbol_lower]
+            if current_time - last_rate_limit < 60:  # Wait 1 minute after rate limit
+                print(f"Skipping {symbol} due to recent rate limit (waiting 60s)")
+                return self.price_cache.get(symbol_lower, {}).get('price', 0.0)
         
         try:
             # Map common symbols to CoinGecko IDs
@@ -88,7 +101,19 @@ class PortfolioService:
                 print(f"No price data found for {symbol} (coin_id: {coin_id})")
                 return 0.0
         except Exception as e:
+            error_msg = str(e)
             print(f"Error fetching price for {symbol} (coin_id: {coin_id}): {e}")
+            
+            # Track rate limit errors
+            if "429" in error_msg or "rate limit" in error_msg.lower():
+                self.rate_limit_cache[symbol_lower] = current_time
+                print(f"Rate limit detected for {symbol}, caching failure for 60s")
+                # Return cached price if available
+                if symbol_lower in self.price_cache:
+                    cached_price = self.price_cache[symbol_lower]['price']
+                    print(f"Returning cached price for {symbol}: ${cached_price}")
+                    return cached_price
+            
             return 0.0
     
     async def get_kucoin_portfolio(self) -> WalletInfo:
