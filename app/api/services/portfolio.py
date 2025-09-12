@@ -20,7 +20,7 @@ class PortfolioService:
         self.price_cache = {}
         self.cache_duration = 300  # 5 minutes cache for prices
         self.rate_limit_cache = {}  # Track rate limit failures
-        self.popular_coins_cache_duration = 15  # 15 minutes for popular coins (BTC, ETH, etc.)
+        self.popular_coins_cache_duration = 900  # 15 minutes for popular coins (BTC, ETH, etc.)
         
     async def get_crypto_price(self, symbol: str) -> float:
         """Get current price of a cryptocurrency in USD"""
