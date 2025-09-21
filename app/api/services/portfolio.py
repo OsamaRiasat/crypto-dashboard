@@ -84,7 +84,7 @@ class PortfolioService:
                 'zeus': 'zeus-network',
                 'gtc': 'gitcoin',
                 'shib': 'shiba-inu',
-                'omg': 'omg-network',
+                'omg': 'omisego',
                 'aud': 'audius',
                 'audio': 'audius'
             }
@@ -170,7 +170,7 @@ class PortfolioService:
             'zeus': 'zeus-network',
             'gtc': 'gitcoin',
             'shib': 'shiba-inu',
-            'omg': 'omg-network',
+            'omg': 'omisego',
             'aud': 'audius',
             'audio': 'audius'
         }
