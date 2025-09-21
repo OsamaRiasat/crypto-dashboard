@@ -47,6 +47,33 @@ class CoinGeckoService:
         else:
             raise Exception(f"Error fetching trending data: {response.status_code}")
     
+    def get_multiple_coin_prices(self, coin_ids: list, vs_currency: str = "usd") -> Dict[str, float]:
+        """Get prices for multiple coins in a single API call"""
+        if not coin_ids:
+            return {}
+        
+        # CoinGecko simple price endpoint supports up to 250 coins per request
+        url = f"{self.base_url}/simple/price"
+        coin_ids_str = ",".join(coin_ids)
+        
+        params = {
+            "ids": coin_ids_str,
+            "vs_currencies": vs_currency
+        }
+        
+        response = requests.get(url, params=params)
+        
+        if response.status_code == 200:
+            data = response.json()
+            # Convert to simple dict mapping coin_id -> price
+            prices = {}
+            for coin_id, price_data in data.items():
+                if vs_currency in price_data:
+                    prices[coin_id] = float(price_data[vs_currency])
+            return prices
+        else:
+            raise Exception(f"Error fetching batch prices: {response.status_code}")
+    
     def get_global_data(self) -> Dict[str, Any]:
         """Get global cryptocurrency market data"""
         url = f"{self.base_url}/global"

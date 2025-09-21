@@ -1,7 +1,6 @@
 import json
 from typing import Dict, Any, Optional, List
-from coinbase.wallet.client import Client
-from coinbase.wallet.error import CoinbaseError
+from coinbase.rest import RESTClient
 
 from app.core.config import settings
 
@@ -11,34 +10,43 @@ class CoinbaseService:
         self.api_secret = settings.COINBASE_API_SECRET
         self.client = None
         if self.api_key and self.api_secret:
-            self.client = Client(self.api_key, self.api_secret)
+            self.client = RESTClient(api_key=self.api_key, api_secret=self.api_secret)
     
     def get_account_balance(self) -> List[Dict[str, Any]]:
-        """Get account balance for all assets - currently returning mock data"""
-        # Return mock data while API credentials are being updated
-        mock_balances = [
-            {
-                'asset': 'BTC',
-                'balance': 0.00005,
-                'name': 'Bitcoin Wallet',
-                'type': 'wallet'
-            },
-            {
-                'asset': 'ETH',
-                'balance': 1.25,
-                'name': 'Ethereum Wallet',
-                'type': 'wallet'
-            },
-            {
-                'asset': 'USDC',
-                'balance': 500.0,
-                'name': 'USD Coin Wallet',
-                'type': 'wallet'
-            }
-        ]
+        """Get account balance for all assets"""
+        if not self.client:
+            return []
         
-        print("Note: Using mock Coinbase data - update API credentials for real data")
-        return mock_balances
+        try:
+            # Get accounts using the new Advanced API
+            accounts_response = self.client.get_accounts()
+            balances = []
+            
+            for account in accounts_response.accounts:
+                # Handle the new API response format
+                if hasattr(account, 'available_balance') and account.available_balance:
+                    balance = account.available_balance
+                    if isinstance(balance, dict):
+                        balance_amount = float(balance.get('value', 0))
+                        currency = balance.get('currency', 'UNKNOWN')
+                    else:
+                        balance_amount = float(getattr(balance, 'value', 0))
+                        currency = getattr(balance, 'currency', 'UNKNOWN')
+                    
+                    if balance_amount > 0:  # Only include accounts with positive balance
+                        balances.append({
+                            'asset': currency,
+                            'balance': balance_amount,
+                            'name': account.name,
+                            'type': getattr(account, 'type', 'wallet')
+                        })
+            
+            return balances
+            
+        except Exception as e:
+            # Log error but return empty list to allow other wallets to work
+            print(f"Coinbase API error: {e}")
+            return []
 
 # Create singleton instance
 coinbase_service = CoinbaseService()

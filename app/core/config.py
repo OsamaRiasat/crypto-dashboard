@@ -28,6 +28,10 @@ class Settings(BaseSettings):
     COINBASE_API_KEY: str = os.getenv("COINBASE_API_KEY", "")
     COINBASE_API_SECRET: str = os.getenv("COINBASE_API_SECRET", "")
     
+    # Swyftx API credentials
+    SWYFTX_API_KEY: str = os.getenv("SWYFTX_API_KEY", "")
+    SWYFTX_ACCESS_TOKEN: str = os.getenv("SWYFTX_ACCESS_TOKEN", "")
+    
     # API endpoints
     COINGECKO_API_URL: str = "https://api.coingecko.com/api/v3"
     KUCOIN_API_URL: str = "https://api.kucoin.com"
