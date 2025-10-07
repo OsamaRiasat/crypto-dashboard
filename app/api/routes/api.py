@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 
-from app.api.routes import coingecko, kucoin, binance, portfolio
+from app.api.routes import coingecko, kucoin, binance, portfolio, chatbot
 from app.core.config import settings
 
 # Create the main API router
@@ -11,3 +11,4 @@ api_router.include_router(coingecko.router)
 api_router.include_router(kucoin.router)
 api_router.include_router(binance.router)
 api_router.include_router(portfolio.router)
+api_router.include_router(chatbot.router)

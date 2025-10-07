@@ -1,12 +1,13 @@
 # Crypto Dashboard API
 
-This project provides a FastAPI backend that exposes APIs for CoinGecko, KuCoin, and Binance cryptocurrency data.
+This project provides a FastAPI backend that exposes APIs for CoinGecko, KuCoin, and Binance cryptocurrency data, along with an AI-powered chatbot for cryptocurrency guidance.
 
 ## Features
 
 - Real-time cryptocurrency price and market data from CoinGecko
 - Account information and trading data from KuCoin
 - Account balances and transaction history from Binance
+- AI-powered chatbot using GPT-4 for cryptocurrency guidance and education
 
 ## Project Structure
 
@@ -38,7 +39,12 @@ KUCOIN_API_PASSPHRASE=your_kucoin_api_passphrase
 # Binance API Credentials
 BINANCE_API_KEY=your_binance_api_key
 BINANCE_API_SECRET=your_binance_api_secret
+
+# OpenAI API Credentials (for GPT-4 chatbot)
+OPENAI_API_KEY=your_openai_api_key
 ```
+
+A complete example file is available at `.env.example`.
 
 ## Running the API
 
@@ -71,3 +77,6 @@ The API will be available at http://localhost:8000
 - GET `/api/v1/binance/balance` - Get account balances
 - GET `/api/v1/binance/deposits` - Get deposit history
 - GET `/api/v1/binance/withdrawals` - Get withdrawal history
+
+### Chatbot
+- POST `/api/v1/chatbot/` - Get AI-powered responses to cryptocurrency questions using GPT-4
