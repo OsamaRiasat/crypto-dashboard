@@ -1,4 +1,5 @@
 from fastapi import FastAPI, Request
+from contextlib import asynccontextmanager
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 import time
@@ -6,16 +7,24 @@ import time
 from app.api.routes.api import api_router
 from app.core.config import settings
 from app.utils.helpers import get_logger
+from app.core.db import init_db
 
 logger = get_logger(__name__)
 
-# Initialize FastAPI app
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Startup: initialize shared resources (e.g., DB)
+    init_db()
+    yield
+    # Shutdown: clean up resources if needed
+
 app = FastAPI(
     title=settings.PROJECT_NAME,
     description=settings.PROJECT_DESCRIPTION,
     version=settings.VERSION,
     docs_url="/docs",
     redoc_url="/redoc",
+    lifespan=lifespan,
 )
 
 # Add CORS middleware
