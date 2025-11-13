@@ -43,7 +43,7 @@ def signup(payload: UserCreate, response: Response, db: Session = Depends(get_db
         httponly=True,
         secure=False,  # set True in production behind HTTPS
         samesite="lax",
-        max_age=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
+        max_age=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 6000,
     )
     return UserPublic(
         id=user.id,
@@ -69,7 +69,7 @@ def login(payload: UserLogin, response: Response, db: Session = Depends(get_db))
         httponly=True,
         secure=False,  # set True in production behind HTTPS
         samesite="lax",
-        max_age=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
+        max_age=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 6000,
     )
     return UserPublic(
         id=user.id,

@@ -9,7 +9,17 @@ from app.api.models.portfolio import (
 )
 from app.core.db import get_db
 from app.core.security import get_current_user
-from app.api.models.db import User, UserOnboarding, UserRiskAllocation
+from app.api.models.db import User
+from app.utils.onboarding_update import (
+    ensure_onboarding,
+    update_onboarding_fields,
+    upsert_risk_allocation,
+    replace_selected_assets,
+    upsert_rebalance_rule,
+    upsert_contribution_plan,
+    upsert_goals,
+    upsert_leverage_preference,
+)
 
 router = APIRouter(prefix="/portfolio", tags=["portfolio"])
 
@@ -56,58 +66,59 @@ def update_onboarding(
             payload.risk_allocation.growth_pct is None and
             payload.risk_allocation.wildcard_pct is None
         ))
+        and (payload.user_selected_assets is None or len(payload.user_selected_assets) == 0)
+        and (payload.rebalancing is None or (payload.rebalancing.frequency is None and payload.rebalancing.margin_pct is None))
+        and (payload.contributions is None or (payload.contributions.amount_usd is None and payload.contributions.frequency is None))
+        and (payload.leverage is None or (payload.leverage.enabled is None and payload.leverage.leverage_pct is None))
+        and (payload.goals is None or len(payload.goals) == 0)
     ):
-        raise HTTPException(status_code=422, detail="Provide at least one field to update: portfolio_size, intent, experience, allocation_preset, or risk_allocation")
+        raise HTTPException(status_code=422, detail="Provide at least one field to update: portfolio_size, intent, experience, allocation_preset, risk_allocation, user_selected_assets, rebalancing, contributions, leverage, or goals")
 
-    onboarding = (
-        db.query(UserOnboarding)
-        .filter(UserOnboarding.user_id == user.id)
-        .first()
-    )
-    if onboarding is None:
-        onboarding = UserOnboarding(user_id=user.id)
-        db.add(onboarding)
-
-    if payload.portfolio_size is not None:
-        onboarding.portfolio_size = payload.portfolio_size
-    if payload.intent is not None:
-        onboarding.intent = payload.intent
-    if payload.experience is not None:
-        onboarding.experience = payload.experience
-    if payload.allocation_preset is not None:
-        onboarding.allocation_preset = payload.allocation_preset
+    onboarding = ensure_onboarding(db, user.id)
+    update_onboarding_fields(onboarding, payload)
 
     # Risk allocation upsert
-    risk_alloc = (
-        db.query(UserRiskAllocation)
-        .filter(UserRiskAllocation.user_id == user.id)
-        .first()
+    risk_alloc = upsert_risk_allocation(db, user.id, payload)
+
+    # Rebalancing upsert
+    rebalance_rule = upsert_rebalance_rule(db, user.id, payload)
+
+    # Contributions upsert
+    contrib_plan = upsert_contribution_plan(db, user.id, payload)
+
+    # Leverage preference upsert
+    leverage_pref = upsert_leverage_preference(db, user.id, payload)
+
+    # Selected assets replace
+    created_assets = replace_selected_assets(
+        db,
+        user.id,
+        None if payload.user_selected_assets is None else [item.dict(by_alias=True) for item in payload.user_selected_assets]
     )
-    if payload.risk_allocation is not None:
-        ra = payload.risk_allocation
-        if risk_alloc is None:
-            # For creation, require all three percentages
-            if ra.collateral_pct is None or ra.growth_pct is None or ra.wildcard_pct is None:
-                raise HTTPException(status_code=422, detail="To set risk allocation for the first time, provide collateral_pct, growth_pct, and wildcard_pct")
-            risk_alloc = UserRiskAllocation(
-                user_id=user.id,
-                collateral_pct=ra.collateral_pct,
-                growth_pct=ra.growth_pct,
-                wildcard_pct=ra.wildcard_pct,
-            )
-            db.add(risk_alloc)
-        else:
-            if ra.collateral_pct is not None:
-                risk_alloc.collateral_pct = ra.collateral_pct
-            if ra.growth_pct is not None:
-                risk_alloc.growth_pct = ra.growth_pct
-            if ra.wildcard_pct is not None:
-                risk_alloc.wildcard_pct = ra.wildcard_pct
+
+    # Goals upsert (create/update by name)
+    affected_goals = upsert_goals(
+        db,
+        user.id,
+        None if payload.goals is None else [g.dict() for g in payload.goals]
+    )
 
     db.commit()
     db.refresh(onboarding)
     if risk_alloc is not None:
         db.refresh(risk_alloc)
+    if rebalance_rule is not None:
+        db.refresh(rebalance_rule)
+    if contrib_plan is not None:
+        db.refresh(contrib_plan)
+    if leverage_pref is not None:
+        db.refresh(leverage_pref)
+    if created_assets is not None:
+        for a in created_assets:
+            db.refresh(a)
+    if affected_goals is not None:
+        for g in affected_goals:
+            db.refresh(g)
 
     return OnboardingUpdateResponse(
         user_id=user.id,
@@ -121,5 +132,39 @@ def update_onboarding(
                 "growth_pct": risk_alloc.growth_pct,
                 "wildcard_pct": risk_alloc.wildcard_pct,
             }
+        ),
+        rebalancing=(
+            None if rebalance_rule is None else {
+                "frequency": getattr(rebalance_rule.frequency, "name", str(rebalance_rule.frequency)).lower(),
+                "margin_pct": rebalance_rule.threshold_pct,
+            }
+        ),
+        contributions=(
+            None if contrib_plan is None else {
+                "amount_usd": contrib_plan.amount,
+                "frequency": getattr(contrib_plan.frequency, "name", str(contrib_plan.frequency)).lower(),
+            }
+        ),
+        leverage=(
+            None if leverage_pref is None else {
+                "enabled": leverage_pref.enabled,
+                "leverage_pct": leverage_pref.leverage_pct,
+            }
+        ),
+        user_selected_assets=(
+            None if created_assets is None else [
+                {"symbol": a.symbol, "layer": a.layer}
+                for a in created_assets
+            ]
+        ),
+        goals=(
+            None if affected_goals is None else [
+                {
+                    "name": g.name,
+                    "target_amount": f"{g.target_amount:.2f}",
+                    "months": g.months,
+                }
+                for g in affected_goals
+            ]
         ),
     )
