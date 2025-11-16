@@ -9,7 +9,16 @@ from app.api.models.portfolio import (
 )
 from app.core.db import get_db
 from app.core.security import get_current_user
-from app.api.models.db import User
+from app.api.models.db import (
+    User,
+    UserOnboarding,
+    UserRiskAllocation,
+    UserSelectedAsset,
+    UserRebalanceRule,
+    UserContributionPlan,
+    UserLeveragePreference,
+    UserGoal,
+)
 from app.utils.onboarding_update import (
     ensure_onboarding,
     update_onboarding_fields,
@@ -45,7 +54,84 @@ async def get_total_portfolio_value():
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error fetching total portfolio value: {str(e)}")
 
-# Removed individual /size and /intent endpoints in favor of unified /update
+@router.get("/strategy", response_model=OnboardingUpdateResponse)
+def get_strategy(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Return the user's current strategy/settings across all updatable fields."""
+    user_id = current_user.id
+
+    onboarding = (
+        db.query(UserOnboarding).filter(UserOnboarding.user_id == user_id).first()
+    )
+    risk_alloc = (
+        db.query(UserRiskAllocation).filter(UserRiskAllocation.user_id == user_id).first()
+    )
+    assets = (
+        db.query(UserSelectedAsset).filter(UserSelectedAsset.user_id == user_id).all()
+    )
+    rebalance_rule = (
+        db.query(UserRebalanceRule).filter(UserRebalanceRule.user_id == user_id).first()
+    )
+    contrib_plan = (
+        db.query(UserContributionPlan).filter(UserContributionPlan.user_id == user_id).first()
+    )
+    leverage_pref = (
+        db.query(UserLeveragePreference).filter(UserLeveragePreference.user_id == user_id).first()
+    )
+    goals = (
+        db.query(UserGoal).filter(UserGoal.user_id == user_id).all()
+    )
+
+    return OnboardingUpdateResponse(
+        user_id=user_id,
+        portfolio_size=None if onboarding is None else onboarding.portfolio_size,
+        intent=None if onboarding is None else onboarding.intent,
+        experience=None if onboarding is None else onboarding.experience,
+        allocation_preset=None if onboarding is None else onboarding.allocation_preset,
+        risk_allocation=(
+            None if risk_alloc is None else {
+                "collateral_pct": risk_alloc.collateral_pct,
+                "growth_pct": risk_alloc.growth_pct,
+                "wildcard_pct": risk_alloc.wildcard_pct,
+            }
+        ),
+        rebalancing=(
+            None if rebalance_rule is None else {
+                "frequency": getattr(rebalance_rule.frequency, "name", str(rebalance_rule.frequency)).lower(),
+                "margin_pct": rebalance_rule.threshold_pct,
+            }
+        ),
+        contributions=(
+            None if contrib_plan is None else {
+                "amount_usd": contrib_plan.amount,
+                "frequency": getattr(contrib_plan.frequency, "name", str(contrib_plan.frequency)).lower(),
+            }
+        ),
+        leverage=(
+            None if leverage_pref is None else {
+                "enabled": leverage_pref.enabled,
+                "leverage_pct": leverage_pref.leverage_pct,
+            }
+        ),
+        user_selected_assets=(
+            None if assets is None or len(assets) == 0 else [
+                {"symbol": a.symbol, "layer": a.layer}
+                for a in assets
+            ]
+        ),
+        goals=(
+            None if goals is None or len(goals) == 0 else [
+                {
+                    "name": g.name,
+                    "target_amount": f"{g.target_amount:.2f}",
+                    "months": g.months,
+                }
+                for g in goals
+            ]
+        ),
+    )
 
 @router.post("/update", response_model=OnboardingUpdateResponse)
 def update_onboarding(

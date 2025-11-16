@@ -23,7 +23,7 @@ def get_password_hash(password: str) -> str:
 
 def create_access_token(subject: int, expires_minutes: Optional[int] = None) -> str:
     expire = datetime.utcnow() + timedelta(
-        minutes=expires_minutes or settings.ACCESS_TOKEN_EXPIRE_MINUTES
+        minutes=expires_minutes or settings.ACCESS_TOKEN_EXPIRE_MINUTES * 6000
     )
     to_encode = {"sub": str(subject), "exp": expire, "iat": datetime.utcnow()}
     token = jwt.encode(
