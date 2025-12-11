@@ -2,7 +2,7 @@ from fastapi import APIRouter, HTTPException, Query
 from typing import Optional, List
 
 from app.api.services.kucoin import kucoin_service
-from app.api.models.crypto import KuCoinAccount, KuCoinKeyInfo
+from app.api.schemas.crypto import KuCoinAccount, KuCoinKeyInfo
 
 router = APIRouter(prefix="/kucoin", tags=["kucoin"])
 

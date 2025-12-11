@@ -2,7 +2,7 @@ from fastapi import APIRouter, HTTPException
 from typing import List
 
 from app.api.services.binance import binance_service
-from app.api.models.binance import BinanceBalance, BinanceTransaction
+from app.api.schemas.binance import BinanceBalance, BinanceTransaction
 
 router = APIRouter(prefix="/binance", tags=["binance"])
 

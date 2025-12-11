@@ -13,7 +13,7 @@ from app.api.services.binance import binance_service
 from app.api.services.coinbase import coinbase_service
 from app.api.services.swyftx import swyftx_service
 from app.api.services.coingecko import coingecko_service
-from app.api.models.portfolio import PortfolioSummary, WalletInfo
+from app.api.schemas.portfolio import PortfolioSummary, WalletInfo
 from app.core.config import settings
 
 class PortfolioService:

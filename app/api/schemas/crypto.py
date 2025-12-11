@@ -13,7 +13,7 @@ class CoinData(BaseModel):
     volume_24h: Optional[float] = None
     
     class Config:
-        schema_extra = {
+        json_schema_extra = {
             "example": {
                 "name": "Bitcoin",
                 "symbol": "btc",
@@ -36,7 +36,7 @@ class KuCoinAccount(BaseModel):
     holds: str
     
     class Config:
-        schema_extra = {
+        json_schema_extra = {
             "example": {
                 "id": "5bd6e9286d99522a52e458de",
                 "currency": "BTC",
@@ -57,7 +57,7 @@ class KuCoinKeyInfo(BaseModel):
     ipRestrict: str
     
     class Config:
-        schema_extra = {
+        json_schema_extra = {
             "example": {
                 "userId": "5c2b99f4a18397029283d5a0",
                 "subName": "",

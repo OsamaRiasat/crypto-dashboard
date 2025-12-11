@@ -1,6 +1,6 @@
 from pydantic import BaseModel, Field
 from typing import List, Dict, Any, Optional
-from app.api.models.db import Intent, ExperienceLevel, AllocationPreset, Layer
+from app.api.models.enums import Intent, ExperienceLevel, AllocationPreset, Layer
 
 class WalletInfo(BaseModel):
     wallet_type: str  # 'kucoin', 'binance', 'coinbase'
@@ -16,7 +16,7 @@ class PortfolioSummary(BaseModel):
     last_updated: str
     
     class Config:
-        schema_extra = {
+        json_schema_extra = {
             "example": {
                 "total_portfolio_value_usd": 15000.50,
                 "connected_wallets_count": 2,
@@ -53,7 +53,7 @@ class PortfolioSizeResponse(BaseModel):
     portfolio_size: int
     
     class Config:
-        schema_extra = {
+        json_schema_extra = {
             "example": {
                 "user_id": 1,
                 "portfolio_size": 25000
@@ -70,7 +70,7 @@ class UserIntentResponse(BaseModel):
     intent: Intent
 
     class Config:
-        schema_extra = {
+        json_schema_extra = {
             "example": {
                 "user_id": 1,
                 "intent": "growth"
@@ -85,7 +85,7 @@ class SelectedAssetItem(BaseModel):
     layer: Layer = Field(description="Layer: Collateral | Growth | Wildcard")
 
     class Config:
-        allow_population_by_field_name = True
+        validate_by_name = True
 
 class RiskAllocationUpdate(BaseModel):
     collateral_pct: Optional[int] = Field(default=None, ge=0, le=100, description="Collateral layer percentage (0–100)")
@@ -139,7 +139,7 @@ class OnboardingUpdateResponse(BaseModel):
     goals: Optional[List[GoalUpdateItem]] = None
 
     class Config:
-        schema_extra = {
+        json_schema_extra = {
             "example": {
                 "user_id": 1,
                 "portfolio_size": 25000,

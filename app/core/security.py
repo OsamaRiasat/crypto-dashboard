@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 from passlib.context import CryptContext
 from app.core.config import settings
 from app.core.db import get_db
-from app.api.models.db import User
+from app.api.models.user import User
 
 # Use Argon2 (modern and no 72-byte limitation)
 pwd_context = CryptContext(schemes=["argon2"], deprecated="auto")

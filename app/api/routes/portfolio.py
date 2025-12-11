@@ -1,24 +1,23 @@
 from fastapi import APIRouter, HTTPException, Depends
 from sqlalchemy.orm import Session
 
+from app.api.models.user import User
+from app.api.models.user_contribution_plan import UserContributionPlan
+from app.api.models.user_goal import UserGoal
+from app.api.models.user_leverage_preference import UserLeveragePreference
+from app.api.models.user_onboarding import UserOnboarding
+from app.api.models.user_rebalance_rule import UserRebalanceRule
+from app.api.models.user_risk_allocation import UserRiskAllocation
+from app.api.models.user_selected_asset import UserSelectedAsset
 from app.api.services.portfolio import portfolio_service
-from app.api.models.portfolio import (
+from app.api.schemas.portfolio import (
     PortfolioSummary,
     OnboardingUpdate,
     OnboardingUpdateResponse,
 )
 from app.core.db import get_db
 from app.core.security import get_current_user
-from app.api.models.db import (
-    User,
-    UserOnboarding,
-    UserRiskAllocation,
-    UserSelectedAsset,
-    UserRebalanceRule,
-    UserContributionPlan,
-    UserLeveragePreference,
-    UserGoal,
-)
+
 from app.utils.onboarding_update import (
     ensure_onboarding,
     update_onboarding_fields,

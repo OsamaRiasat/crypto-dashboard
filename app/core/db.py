@@ -9,8 +9,9 @@ engine = create_engine(
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 def init_db() -> None:
-    from app.api.models.db import Base
-    Base.metadata.create_all(bind=engine)
+    # from app.api.models.db import Base
+    # Base.metadata.create_all(bind=engine)
+    pass
 
 def get_db():
     db = SessionLocal()

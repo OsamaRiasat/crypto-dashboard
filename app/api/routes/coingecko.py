@@ -2,7 +2,7 @@ from fastapi import APIRouter, HTTPException, Query
 from typing import Optional
 
 from app.api.services.coingecko import coingecko_service
-from app.api.models.crypto import CoinData
+from app.api.schemas.crypto import CoinData
 
 router = APIRouter(prefix="/coingecko", tags=["coingecko"])
 

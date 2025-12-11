@@ -15,7 +15,7 @@ class BinanceAccount(BaseModel):
     balances: List[BinanceBalance]
 
     class Config:
-        schema_extra = {
+        json_schema_extra = {
             "example": {
                 "balances": [
                     {
