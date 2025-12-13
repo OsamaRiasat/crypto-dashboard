@@ -166,17 +166,4 @@ class OnboardingUpdateResponse(BaseModel):
                 ]
             }
         }
-
-# --- AI Strategy Summary ---
-
-class StrategySummaryResponse(BaseModel):
-    summary_text: str = Field(description="AI-generated portfolio summary (max 150 words)")
-    generated_at: datetime = Field(description="ISO timestamp when summary was generated")
-    
-    class Config:
-        json_schema_extra = {
-            "example": {
-                "summary_text": "Your portfolio aligns with a growth-focused strategy with moderate risk tolerance. Currently allocated 45% to collateral assets, 40% to growth, and 15% to wildcards, showing slight deviation from your 40/50/10 target. This allocation balances stability with growth potential. Your beginner experience level is appropriately matched with this diversified approach. Recent 7-day performance shows 3.2% gains, primarily driven by growth tier holdings. With your Emergency Fund goal of $5,000 in 12 months, current monthly contributions of $250 are on track. Consider the trade-off between higher wildcard exposure for potential gains versus increased volatility.",
-                "generated_at": "2025-12-13T10:30:00Z"
-            }
-        }
+        

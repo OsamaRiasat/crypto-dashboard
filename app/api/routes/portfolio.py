@@ -10,10 +10,17 @@ from app.api.models.user_rebalance_rule import UserRebalanceRule
 from app.api.models.user_risk_allocation import UserRiskAllocation
 from app.api.models.user_selected_asset import UserSelectedAsset
 from app.api.services.portfolio import portfolio_service
+from app.api.services.strategy_drift import strategy_drift_service
+from app.api.services.portfolio_categorization import portfolio_categorization
 from app.api.schemas.portfolio import (
     PortfolioSummary,
     OnboardingUpdate,
     OnboardingUpdateResponse,
+)
+from app.api.schemas.strategy import (
+    StrategyDriftResponse,
+    TierAllocation,
+    CategorizedPortfolioResponse,
 )
 from app.core.db import get_db
 from app.core.security import get_current_user
@@ -253,3 +260,73 @@ def update_onboarding(
             ]
         ),
     )
+
+@router.get("/strategy-drift", response_model=StrategyDriftResponse)
+async def get_strategy_drift(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Get strategy drift indicator showing tier-level deviation.
+    
+    Compares target tier allocations (from onboarding) with current 
+    portfolio allocations to show how closely the portfolio matches 
+    the original strategy.
+    
+    Requirements:
+    - User must have configured risk allocation (target tiers)
+    
+    Returns:
+    - target: Target tier percentages (Collateral/Growth/Wildcard)
+    - current: Current tier percentages from portfolio
+    - drift: Delta per tier (current - target)
+    - last_updated: ISO timestamp
+    
+    Note: This is informational only and not financial advice.
+    Drift indicators do not constitute recommendations.
+    """
+    try:
+        user_id = current_user.id
+        
+        # Calculate drift
+        result = await strategy_drift_service.calculate_drift(db, user_id)
+        
+        if not result:
+            raise HTTPException(
+                status_code=400,
+                detail="Cannot calculate strategy drift. Please ensure you have configured your portfolio strategy."
+            )
+        
+        return StrategyDriftResponse(
+            target=TierAllocation(**result["target"]),
+            current=TierAllocation(**result["current"]),
+            drift=result["drift"],
+            last_updated=result["last_updated"]
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error calculating strategy drift: {str(e)}"
+        )
+
+@router.get("/categorized", response_model=CategorizedPortfolioResponse)
+async def get_categorized_portfolio(
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Get portfolio assets categorized by strategy tier (Collateral/Growth/Wildcard).
+    
+    Returns tier-based breakdown with percentages and asset lists.
+    Backend is the single source of truth for asset categorization.
+    """
+    try:
+        result = await portfolio_categorization.get_categorized_portfolio()
+        return CategorizedPortfolioResponse(**result)
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to retrieve categorized portfolio: {str(e)}"
+        )

@@ -8,7 +8,7 @@ from fastapi import APIRouter, HTTPException, Depends
 from sqlalchemy.orm import Session
 
 from app.api.models.user import User
-from app.api.schemas.portfolio import StrategySummaryResponse
+from app.api.schemas.strategy import StrategySummaryResponse
 from app.api.services.strategy_summary import strategy_summary_service
 from app.core.db import get_db
 from app.core.security import get_current_user
